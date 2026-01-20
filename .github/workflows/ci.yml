@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: vet
+        run: go vet ./...
+      - name: test
+        run: go test ./...
+
+  build:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - {goos: windows, goarch: amd64, ext: .exe}
+          - {goos: windows, goarch: arm64, ext: .exe}
+          - {goos: linux, goarch: amd64, ext: ""}
+          - {goos: linux, goarch: arm64, ext: ""}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: go build -trimpath -ldflags "-s -w -X main.version=$(git describe --tags --always --dirty)" -o samplive-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} ./cmd/samplive
+      - uses: actions/upload-artifact@v4
+        with:
+          name: samplive-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: samplive-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+          generate_release_notes: true
