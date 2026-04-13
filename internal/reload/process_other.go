@@ -12,3 +12,10 @@ import (
 func detach(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 }
+
+// detachConsole is the same as detach outside Windows: open.mp reads console
+// commands from a redirected stdin pipe there, so no console juggling is
+// needed.
+func detachConsole(cmd *exec.Cmd) {
+	detach(cmd)
+}

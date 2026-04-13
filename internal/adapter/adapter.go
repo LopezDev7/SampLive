@@ -14,9 +14,9 @@ import (
 
 // Result describes a completed reload.
 type Result struct {
-	Method    string // e.g. "rcon:changemode", "process:restart"
+	Method    string // e.g. "console:changemode", "rcon:changemode", "process:restart"
 	Output    string // server output, if any
-	Preserved bool   // whether gamemode state was preserved. always false for now
+	Preserved bool   // whether the server kept running and players stayed connected
 }
 
 // Capabilities advertises which reload methods a runtime supports.
@@ -33,8 +33,7 @@ type RuntimeAdapter interface {
 	Reload(info *detect.RuntimeInfo, cfg *config.Config, amx string) (*Result, error)
 }
 
-// gamemodeName returns the gamemode name (base name without extension) from
-// a compiled .amx path.
+// gamemodeName strips the extension from a compiled .amx path.
 func gamemodeName(amx string) string {
 	base := filepath.Base(amx)
 	return strings.TrimSuffix(base, filepath.Ext(base))
@@ -73,6 +72,7 @@ func processController(cfg *config.Config, info *detect.RuntimeInfo) (*reload.Pr
 	return &reload.ProcessController{
 		Command: cfg.Server.Command,
 		Args:    cfg.Server.Args,
+		Dir:     info.Root,
 		Port:    info.Port,
 	}, true
 }

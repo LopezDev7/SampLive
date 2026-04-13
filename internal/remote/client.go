@@ -1,7 +1,3 @@
-// Package remote deploys compiled artifacts to a remote server over SFTP
-// and runs commands over SSH. Reloads themselves happen over the network
-// (RCON or the configured restart command), so the remote OS does not
-// matter for SampLive.
 package remote
 
 import (

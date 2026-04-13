@@ -9,7 +9,6 @@ The config lives in `samplive.yaml`. The easiest way to get one is
 - `gamemode` — your gamemode name, without extension.
 - `debounce` — how long to ignore rapid saves before compiling. Default
   `300ms`.
-- `watch` — reserved for future use.
 
 ### project.compiler
 

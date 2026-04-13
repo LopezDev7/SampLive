@@ -33,10 +33,7 @@ func Run(outPath string) error {
 
 	cfg := &config.Config{
 		Project: config.Project{Debounce: "300ms"},
-		Runtime: config.Runtime{},
 		Rcon:    config.Rcon{Enabled: true, Host: "127.0.0.1"},
-		Server:  config.Server{},
-		Remote:  config.Remote{},
 	}
 
 	// 1. Server directory + runtime detection.
@@ -191,7 +188,7 @@ func Run(outPath string) error {
 	if err := os.WriteFile(outPath, data, 0o644); err != nil {
 		return err
 	}
-		fmt.Fprintf(w.out, "\nConfig written to %s\n", outPath)
+	fmt.Fprintf(w.out, "\nConfig written to %s\n", outPath)
 	fmt.Fprintln(w.out, "Next: run `samplive` in this directory and get coding.")
 	return nil
 }

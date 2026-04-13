@@ -153,7 +153,11 @@ func (c *Core) cycleLocal(pwn, amx string) (bool, error) {
 	if err != nil {
 		return true, fmt.Errorf("reload: %w", err)
 	}
-	c.log.Printf("reloaded via %s (state was reset, that's normal)", rr.Method)
+	if rr.Preserved {
+		c.log.Printf("reloaded via %s (players stay connected)", rr.Method)
+	} else {
+		c.log.Printf("reloaded via %s (state was reset, that's normal)", rr.Method)
+	}
 	if rr.Output != "" {
 		c.log.Printf("server: %s", rr.Output)
 	}
@@ -211,8 +215,8 @@ func (c *Core) cycleRemote(pwn, amx string) (bool, error) {
 	return true, fmt.Errorf("remote: no reload method left: configure rcon (rcon.password or remote.rcon_password) or remote.restart_cmd")
 }
 
-// compileAndReport compiles the gamemode, prints diagnostics and returns the
-// .amx path plus whether the build succeeded. Failed builds never reload.
+// compileAndReport compiles, prints diagnostics and reports the .amx path
+// plus whether the build succeeded. Failed builds never reload.
 func (c *Core) compileAndReport(pwn, amx string) (string, bool, error) {
 	res, err := c.comp.Compile(pwn, amx)
 	if err != nil {

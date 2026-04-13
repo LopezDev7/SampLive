@@ -94,8 +94,7 @@ func (w *Watcher) loop() {
 				w.pump(ev.Name)
 			}
 		case <-w.fw.Errors:
-			// surface watcher errors on the events channel would pollute the
-			// pipeline; they are dropped for the MVP.
+			// dropped; they'd only pollute the pipeline.
 		}
 	}
 }

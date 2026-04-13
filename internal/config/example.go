@@ -11,7 +11,6 @@ project:
   root: ./server          # where your server lives
   gamemode: mymode        # your gamemode name, no extension
   debounce: 300ms         # ignores quick bursts of writes so it doesn't compile mid-save
-  watch: []               # reserved: extra files/globs to watch
   compiler:
     path: ""              # pawncc. leave empty and setup finds it for you
     includes: []          # include folders. setup finds these too

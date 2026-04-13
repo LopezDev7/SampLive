@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 
 	"samplive/internal/config"
 	"samplive/internal/core"
+	"samplive/internal/reload"
 	"samplive/internal/setup"
 )
 
@@ -19,7 +22,7 @@ func main() {
 	args := os.Args[1:]
 	if len(args) > 0 {
 		switch args[0] {
-		case "watch", "once", "compile", "setup", "init", "version", "help":
+		case "watch", "once", "compile", "setup", "init", "console", "version", "help":
 			runSubcommand(args[0], args[1:])
 			return
 		}
@@ -39,6 +42,8 @@ func runSubcommand(cmd string, args []string) {
 		runSetup(args)
 	case "init":
 		runInit(args)
+	case "console":
+		runConsole(args)
 	case "version":
 		printVersion()
 	case "help":
@@ -88,6 +93,23 @@ func runInit(args []string) {
 		log.Fatalf("init: %v", err)
 	}
 	fmt.Printf("default config written to %s\n", cfgPath)
+}
+
+// runConsole is the hidden helper behind console:changemode: it attaches to
+// pid's console, types command, exits. SampLive spawns itself this way so the
+// long-running process keeps its own terminal.
+func runConsole(args []string) {
+	if len(args) < 2 {
+		log.Fatalf("usage: samplive console <pid> <command>")
+	}
+	pid, err := strconv.ParseUint(args[0], 10, 32)
+	if err != nil {
+		log.Fatalf("console: bad pid %q", args[0])
+	}
+	command := strings.Join(args[1:], " ")
+	if err := reload.InjectConsoleCommand(uint32(pid), command); err != nil {
+		log.Fatalf("console: %v", err)
+	}
 }
 
 // runLegacy supports the pre-subcommand flags: -config, -once, -watch, -init, -version.
@@ -176,5 +198,6 @@ Flags (all commands):
 The flow: you save a .pwn or .inc, it compiles, errors show up on the
 terminal (and on a failed build the server stays alone), and if it compiled
 it reloads the way the runtime supports it: RCON changemode for SA-MP,
-process restart for open.mp, and SFTP + RCON/SSH for remote servers.`)
+console changemode for open.mp on Windows (players stay connected; it falls
+back to a process restart), and SFTP + RCON/SSH for remote servers.`)
 }

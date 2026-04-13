@@ -24,7 +24,6 @@ type Project struct {
 	Root     string   `yaml:"root"`     // directory that contains the server
 	Gamemode string   `yaml:"gamemode"` // gamemode name without extension
 	Debounce string   `yaml:"debounce"` // debounce window, e.g. "300ms"
-	Watch    []string `yaml:"watch"`    // reserved: extra files/globs to watch
 	Compiler Compiler `yaml:"compiler"`
 }
 
@@ -64,12 +63,12 @@ type Remote struct {
 	SSHPort             int    `yaml:"ssh_port"` // default 22
 	User                string `yaml:"user"`
 	Password            string `yaml:"password"`
-	Keyfile             string `yaml:"keyfile"` // path to an SSH private key
-	AMXPath             string `yaml:"amx_path"` // remote path for the .amx (default: gamemodes/<gamemode>.amx)
-	RconHost            string `yaml:"rcon_host"` // defaults to host
-	RconPort            int    `yaml:"rcon_port"` // 0 = use the detected server port
-	RconPassword        string `yaml:"rcon_password"` // defaults to rcon.password
-	RestartCmd          string `yaml:"restart_cmd"` // optional SSH command to restart the server
+	Keyfile             string `yaml:"keyfile"`                // path to an SSH private key
+	AMXPath             string `yaml:"amx_path"`               // remote path for the .amx (default: gamemodes/<gamemode>.amx)
+	RconHost            string `yaml:"rcon_host"`              // defaults to host
+	RconPort            int    `yaml:"rcon_port"`              // 0 = use the detected server port
+	RconPassword        string `yaml:"rcon_password"`          // defaults to rcon.password
+	RestartCmd          string `yaml:"restart_cmd"`            // optional SSH command to restart the server
 	InsecureSkipHostKey bool   `yaml:"insecure_skip_host_key"` // skip the host key check against ~/.ssh/known_hosts. not recommended
 }
 

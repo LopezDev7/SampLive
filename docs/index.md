@@ -25,7 +25,11 @@ The honest part:
   the gamemode restarts: variables, timers and player data reset, and
   `OnGameModeInit` runs again. Data already saved to your database is safe;
   data only in memory is gone.
-- **open.mp**: restarts the server process. Everyone gets disconnected.
+- **open.mp on Windows**: types `changemode` into the server's console.
+  Players stay connected and the server process is never touched. This is the
+  fastest path and it happens automatically.
+- **open.mp elsewhere** (Linux, macOS): restarts the server process. Everyone
+  gets disconnected.
 - **Remote hosts**: the `.amx` uploads over SFTP and the reload runs over
   RCON or an SSH command. Depends on the server.
 

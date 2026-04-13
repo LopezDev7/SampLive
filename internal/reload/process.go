@@ -2,6 +2,7 @@ package reload
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -9,17 +10,20 @@ import (
 	"strings"
 )
 
-// ProcessController restarts a local server process. It finds the process
-// listening on the server port, kills it, then starts the configured command.
-// This is the universal fallback reload method.
-//
-// Honest limitation: process control only works when SampLive runs on the
-// same machine as the server. On Linux, seeing the PID of another process
-// requires running as the server user (or root).
+// ProcessController restarts a local server process: find the PID on the
+// server port, kill it, start the configured command. The universal fallback
+// reload method. Only works when SampLive runs on the same machine as the
+// server (on Linux, seeing another process's PID needs the server user).
 type ProcessController struct {
 	Command string
 	Args    []string
+	Dir     string
 	Port    int
+	// Console starts the server attached to its own hidden console instead of
+	// detached. open.mp on Windows reads commands from the console input
+	// buffer, so a server started detached can only be reloaded by restarting
+	// it. Starting it with a console enables the console:changemode reload.
+	Console bool
 }
 
 // Restart kills the process on Port (if any) and starts Command+Args.
@@ -34,11 +38,46 @@ func (p *ProcessController) Restart() (string, error) {
 		}
 	}
 	cmd := exec.Command(p.Command, p.Args...)
-	detach(cmd)
-	if err := cmd.Start(); err != nil {
+	if p.Dir != "" {
+		cmd.Dir = p.Dir
+	}
+	if p.Console {
+		detachConsole(cmd)
+	} else {
+		detach(cmd)
+	}
+	err = cmd.Start()
+	// The child holds an inherited duplicate of its stdin handle; the copy we
+	// opened for it can be released now to avoid leaking a handle per restart.
+	if f, ok := cmd.Stdin.(*os.File); ok {
+		f.Close()
+	}
+	if err != nil {
 		return "", fmt.Errorf("process: start %s: %w", p.Command, err)
 	}
 	return fmt.Sprintf("restarted %s (pid %d)", p.Command, cmd.Process.Pid), nil
+}
+
+// FindPIDOnPort returns the PID of the local process listening on port, or 0
+// when nothing is listening.
+func FindPIDOnPort(port int) (int, error) {
+	return findPIDOnPort(port)
+}
+
+// InjectConsoleCommandTo spawns `samplive console <pid> <command>` so the
+// long-running SampLive process keeps its own terminal: the helper attaches
+// to the server's console, types the command and exits.
+func InjectConsoleCommandTo(pid uint32, command string) error {
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("console: locate samplive: %w", err)
+	}
+	cmd := exec.Command(exe, "console", strconv.FormatUint(uint64(pid), 10), command)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("console injection into pid %d: %w (%s)", pid, err, strings.TrimSpace(string(out)))
+	}
+	return nil
 }
 
 // findPIDOnPort returns the PID of the local process listening on port, or 0
@@ -64,21 +103,40 @@ func findPIDOnPort(port int) (int, error) {
 	}
 }
 
-// findPIDWindows parses `netstat -ano` rows in LISTENING state.
+// findPIDWindows parses `netstat -ano`. Matches TCP rows in LISTENING state
+// and UDP rows, because open.mp only binds a UDP socket (no TCP RCON).
 func findPIDWindows(port int) (int, error) {
 	out, err := exec.Command("netstat", "-ano").Output()
 	if err != nil {
 		return 0, err
 	}
+	return parseNetstat(out, port)
+}
+
+func parseNetstat(out []byte, port int) (int, error) {
 	target := fmt.Sprintf(":%d", port)
 	for _, line := range strings.Split(string(out), "\n") {
 		if !strings.Contains(line, target) {
 			continue
 		}
 		fields := strings.Fields(line)
-		if len(fields) >= 5 && fields[4] == "LISTENING" {
-			if pid, err := strconv.Atoi(fields[len(fields)-1]); err == nil && pid > 0 {
-				return pid, nil
+		if len(fields) == 0 {
+			continue
+		}
+		switch fields[0] {
+		case "TCP":
+			// TCP rows: proto, local, foreign, state, pid
+			if len(fields) >= 5 && fields[3] == "LISTENING" {
+				if pid, err := strconv.Atoi(fields[len(fields)-1]); err == nil && pid > 0 {
+					return pid, nil
+				}
+			}
+		case "UDP":
+			// UDP rows have no state column; the PID is the last field.
+			if len(fields) >= 4 {
+				if pid, err := strconv.Atoi(fields[len(fields)-1]); err == nil && pid > 0 {
+					return pid, nil
+				}
 			}
 		}
 	}
