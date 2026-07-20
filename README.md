@@ -3,11 +3,34 @@
 Hot reload for Pawn servers (SA-MP and open.mp).
 
 You save your `.pwn`. It compiles. If it failed, you see the errors and the
-server doesn't move a finger. If it worked, the server starts running your new
-code.
+server stays alone. If it worked, the server runs your new code — on open.mp
+for Windows it doesn't even disconnect anyone.
 
-I got tired of restarting my server every couple of minutes just to test one
-line of code. So I built this.
+## Quick start
+
+    samplive setup
+    samplive
+
+## En español
+
+SampLive recarga tu gamemode solo. Guardás el archivo `.pwn` y él compila y lo
+aplica, sin que tengas que tocar el server.
+
+Pasos, sin ciencia:
+
+1. Bajá el programa desde
+   [Releases](https://github.com/LopezDev7/SampLive/releases) (o compilalo
+   con Go).
+2. Poné el archivo `samplive` en cualquier carpeta.
+3. Abrí una terminal en la carpeta de tu servidor (donde está tu gamemode).
+4. Corré `samplive setup`. Te va a hacer preguntas: casi siempre es solo
+   apretar Enter.
+5. Corré `samplive` y listo.
+
+Ahora cada vez que guardás el `.pwn`, SampLive lo compila y lo carga. Si la
+compilación falla, te muestra los errores y el server no se toca.
+
+Más ayuda: [Empezá acá](docs/quickstart.md).
 
 ## Documentation
 
@@ -18,13 +41,6 @@ line of code. So I built this.
 - Configuration: [docs/configuration.md](docs/configuration.md)
 - Remote servers: [docs/remote.md](docs/remote.md)
 - Troubleshooting: [docs/troubleshooting.md](docs/troubleshooting.md)
-
-## Quick start
-
-    samplive setup
-    samplive
-
-More details: [docs/quickstart.md](docs/quickstart.md)
 
 ## License
 

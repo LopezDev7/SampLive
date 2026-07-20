@@ -39,3 +39,38 @@ hidden console that SampLive drives for you; you never have to look at it.
 
 On Linux/macOS (or if console injection isn't available) it falls back to
 restarting the server process, which disconnects everyone — that's normal.
+
+---
+
+## En español
+
+SampLive se usa desde la carpeta de tu servidor.
+
+### 1. Configurar
+
+    samplive setup
+
+Intenta adivinar todo solo: tu server, si es SA-MP u open.mp, tu gamemode, el
+`pawncc` y la contraseña de RCON. Casi siempre solo tenés que apretar Enter.
+
+Si no encuentra algo, te lo pregunta. Al final te crea un `samplive.yaml`.
+
+### 2. Correr
+
+    samplive
+
+Y listo. Ahora editá un `.pwn`, guardalo, y miralo recargarse solo.
+
+### Qué pasa en open.mp (Windows)
+
+La recarga es **en el momento**: SampLive escribe `changemode` en la consola
+del server, así los jugadores siguen conectados y el proceso no se reinicia.
+Vas a ver esto en la terminal:
+
+    reloaded via console:changemode (players stay connected)
+
+El server corre en segundo plano con una consola oculta que SampLive maneja
+por vos. No tenés que mirarla nunca.
+
+En Linux/macOS (o si no hay consola disponible) se reinicia el proceso del
+server y todos se desconectan — eso es normal.
