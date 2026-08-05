@@ -45,3 +45,40 @@ is planned.
 
 If you don't have a local server folder, set `runtime.force` to `samp` or
 `omp` so SampLive knows which runtime to assume.
+
+---
+
+## Servidores Linux de host (VPS / hosting)
+
+SampLive funciona perfecto en hosts Linux, siempre que tengas acceso **SSH**.
+
+El flujo en un VPS:
+
+1. Compilás en tu máquina (Windows o lo que sea).
+2. SampLive sube el `.amx` por **SFTP**.
+3. Recarga por **RCON** (`changemode`) y, si el server no acepta el comando,
+   por un comando SSH de restart (`restart_cmd`).
+
+Config mínima en `samplive.yaml`:
+
+```yaml
+remote:
+  enabled: true
+  host: 203.0.113.10
+  user: root
+  password: tu-clave-ssh        # o keyfile: /ruta/a/llave
+  rcon_password: cambiemela      # el rcon_password del server remoto
+```
+
+### Hosting sin SSH (paneles)
+
+Si el host solo te da un panel (Pterodactyl y similares), todavía no hay
+integración con el panel: no se puede reiniciar desde SampLive. Lo que sí
+funciona es usar las credenciales SFTP del panel en el bloque `remote` para
+subir el `.amx`. La integración del panel está planeada.
+
+### open.mp en Linux
+
+La recarga en el lugar (jugadores conectados) hoy existe solo en **Windows**,
+porque ahí SampLive le escribe el comando en la consola. En Linux open.mp cae
+al restart del proceso y todos se desconectan — es un TODO pendiente.
