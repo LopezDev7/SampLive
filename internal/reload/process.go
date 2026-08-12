@@ -90,17 +90,24 @@ func findPIDOnPort(port int) (int, error) {
 	if runtime.GOOS == "windows" {
 		return findPIDWindows(port)
 	}
-	// Linux: prefer ss (modern distros), fall back to netstat -tlnp.
-	if pid, err := findPIDSS(port); err != nil {
-		return 0, err
-	} else if pid != 0 {
-		return pid, nil
+	// Linux: prefer ss (modern distros), fall back to netstat. SA-MP binds
+	// TCP (RCON), but open.mp only binds a UDP socket, so check UDP after
+	// TCP; the parsing is identical apart from the LISTEN state check.
+	for _, udp := range []bool{false, true} {
+		if pid, err := findPIDSS(port, udp); err != nil {
+			return 0, err
+		} else if pid != 0 {
+			return pid, nil
+		}
 	}
-	if pid, err := findPIDNetstatLinux(port); err != nil {
-		return 0, err
-	} else {
-		return pid, nil
+	for _, udp := range []bool{false, true} {
+		if pid, err := findPIDNetstatLinux(port, udp); err != nil {
+			return 0, err
+		} else if pid != 0 {
+			return pid, nil
+		}
 	}
+	return 0, nil
 }
 
 // findPIDWindows parses `netstat -ano`. Matches TCP rows in LISTENING state
@@ -143,16 +150,29 @@ func parseNetstat(out []byte, port int) (int, error) {
 	return 0, nil
 }
 
-// findPIDSS parses `ss -tlnp` (Linux). PIDs appear as "pid=1234".
-func findPIDSS(port int) (int, error) {
-	out, err := exec.Command("ss", "-tlnp").Output()
+// findPIDSS parses `ss` output (Linux). PIDs appear as "pid=1234". udp
+// selects UDP sockets (open.mp binds UDP only): UDP rows have no LISTEN
+// state to filter on.
+func findPIDSS(port int, udp bool) (int, error) {
+	flags := "-tlnp"
+	if udp {
+		flags = "-ulnp"
+	}
+	out, err := exec.Command("ss", flags).Output()
 	if err != nil {
 		return 0, nil // ss unavailable; try netstat
 	}
+	return parseSS(out, port, udp)
+}
+
+func parseSS(out []byte, port int, udp bool) (int, error) {
 	target := fmt.Sprintf(":%d", port)
 	pidRe := regexp.MustCompile(`pid=(\d+)`)
 	for _, line := range strings.Split(string(out), "\n") {
-		if !strings.Contains(line, target) || !strings.Contains(line, "LISTEN") {
+		if !strings.Contains(line, target) {
+			continue
+		}
+		if !udp && !strings.Contains(line, "LISTEN") {
 			continue
 		}
 		if m := pidRe.FindStringSubmatch(line); m != nil {
@@ -165,16 +185,27 @@ func findPIDSS(port int) (int, error) {
 	return 0, nil
 }
 
-// findPIDNetstatLinux parses `netstat -tlnp` (legacy Linux). The last field
-// is "PID/Name".
-func findPIDNetstatLinux(port int) (int, error) {
-	out, err := exec.Command("netstat", "-tlnp").Output()
+// findPIDNetstatLinux parses `netstat` output (legacy Linux). The last field
+// is "PID/Name"; UDP rows have no state column.
+func findPIDNetstatLinux(port int, udp bool) (int, error) {
+	flags := "-tlnp"
+	if udp {
+		flags = "-ulnp"
+	}
+	out, err := exec.Command("netstat", flags).Output()
 	if err != nil {
 		return 0, err
 	}
+	return parseNetstatLinux(out, port, udp)
+}
+
+func parseNetstatLinux(out []byte, port int, udp bool) (int, error) {
 	target := fmt.Sprintf(":%d", port)
 	for _, line := range strings.Split(string(out), "\n") {
-		if !strings.Contains(line, target) || !strings.Contains(line, "LISTEN") {
+		if !strings.Contains(line, target) {
+			continue
+		}
+		if !udp && !strings.Contains(line, "LISTEN") {
 			continue
 		}
 		fields := strings.Fields(line)
