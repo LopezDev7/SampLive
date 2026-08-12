@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -165,7 +166,7 @@ func Run(outPath string) error {
 		} else if auth != "" {
 			cfg.Remote.Password = auth
 		}
-		defPath := filepath.Join(info.GamemodesDir, gm+".amx")
+		defPath := path.Join(info.GamemodesDir, gm+".amx")
 		amxPath, err := w.ask("Remote .amx path", defPath)
 		if err != nil {
 			return err
