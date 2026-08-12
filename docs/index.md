@@ -28,7 +28,7 @@ The honest part:
 - **open.mp on Windows**: types `changemode` into the server's console.
   Players stay connected and the server process is never touched. This is the
   fastest path and it happens automatically.
-- **open.mp elsewhere** (Linux, macOS): restarts the server process. Everyone
+- **open.mp elsewhere** (Linux): restarts the server process. Everyone
   gets disconnected.
 - **Remote hosts**: the `.amx` uploads over SFTP and the reload runs over
   RCON or an SSH command. Depends on the server.

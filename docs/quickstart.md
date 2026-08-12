@@ -37,7 +37,7 @@ process keeps running. The terminal prints:
 No setup needed, it just works. The server runs in the background with a
 hidden console that SampLive drives for you; you never have to look at it.
 
-On Linux/macOS (or if console injection isn't available) it falls back to
+On Linux (or if console injection isn't available) it falls back to
 restarting the server process, which disconnects everyone — that's normal.
 
 ---
@@ -72,5 +72,5 @@ Vas a ver esto en la terminal:
 El server corre en segundo plano con una consola oculta que SampLive maneja
 por vos. No tenés que mirarla nunca.
 
-En Linux/macOS (o si no hay consola disponible) se reinicia el proceso del
+En Linux (o si no hay consola disponible) se reinicia el proceso del
 server y todos se desconectan — eso es normal.
