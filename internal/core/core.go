@@ -35,7 +35,11 @@ type Core struct {
 // runtime.force.
 func New(cfg *config.Config, logger *log.Logger) (*Core, error) {
 	c := &Core{cfg: cfg, log: logger}
-	c.comp = compiler.New(cfg.Project.Compiler.Path, cfg.Project.Compiler.Includes, cfg.Project.Compiler.Flags)
+	includes := make([]string, 0, len(cfg.Project.Compiler.Includes))
+	for _, inc := range cfg.Project.Compiler.Includes {
+		includes = append(includes, cfg.AbsPath(inc))
+	}
+	c.comp = compiler.New(cfg.Project.Compiler.Path, includes, cfg.Project.Compiler.Flags)
 	if err := c.comp.Check(); err != nil {
 		return nil, err
 	}
